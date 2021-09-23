@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+
+    <title>TODO crud application</title>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-2"></div>
+            <div class="col-lg-8">
+                <form id="form">
+                    <div class="form-group">
+                        <label for="todo">Todo</label>
+                        <input type="text" class="form-control" id="todoUserInput" placeholder="Todo">
+                        <button type="submit" class="btn btn-primary">Create</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-lg-2"></div>
+        </div>
+        <div class="row">
+            <div class="col-lg-2"></div>
+            <div class="col-lg-8">
+                <ul class="list-group" id="display">
+
+                </ul>
+            </div>
+            <div class="col-lg-2"></div>
+        </div>
+        <br>
+        <div class="row">
+            <div class="col-lg-2"></div>
+            <div class="col-lg-8">
+                <div class="alert" role="alert" id="message">
+
+                </div>
+            </div>
+            <div class="col-lg-2"></div>
+        </div>
+
+    </div>
+
+    <!-- Optional JavaScript; choose one of the two! -->
+
+    <!-- Option 1: Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ"
+        crossorigin="anonymous"></script>
+
+    <!-- Option 2: Separate Popper and Bootstrap JS -->
+    <!--
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js" integrity="sha384-W8fXfP3gkOKtndU4JGtKDvXbO53Wy8SZCQHczT5FMiiqmQfUpWbYdTil/SxwZgAN" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.min.js" integrity="sha384-skAcpIdS7UcVUC05LJ9Dxay8AXcDYfBJqt1CJ85S/CFujBsIzCIv+l9liuYLaMQ/" crossorigin="anonymous"></script>
+    -->
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
+        integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
+        integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+        crossorigin="anonymous"></script>
+    <script>
+        $(document).ready(() => {
+            const display = $("#display");
+            const form = $("#form");
+            const todoUserInput = $("#todoUserInput");
+            const message = $("#message");
+            message.hide();
+
+            const displayMessage = (flag, msg) => {
+                if (flag) {
+                    message.removeClass("alert-danger");
+                    message.addClass("alert-success");
+                    message.html(msg);
+                    message.show();
+                }
+                else {
+                    message.removeClass("alert-success");
+                    message.addClass("alert-danger");
+                    message.html(msg);
+                    message.show();
+                }
+            }
+
+            const getTodos = () => {
+                fetch('/getTodos', { method: 'get' }).then((response) => {
+                    return response.json();
+                }).then((data) => {
+                    console.log(data);
+                    displayTodos(data);
+                });
+            }
+
+            getTodos();
+
+            const resetTodosInput = () => {
+                todoUserInput.val('');
+            }
+
+            const editTodo = (todo, todoID, editID) => {
+                let editBtn = $(`#${editID}`);
+                editBtn.click(() => {
+                    fetch(`/${todo._id}`, {
+                        method: "put",
+                        headers: { "Content-Type": "application/json ; charset: utf-8" },
+                        body: JSON.stringify({ todo: todoUserInput.val() })
+                    }).then((response) => {
+                        return response.json();
+                    }).then((data) => {
+                        if (data.ok == 1) {
+                            let todoIndex = $(`#${todoID}`);
+                            todoIndex.html(data.value.todo);
+                            resetTodosInput();
+                        }
+
+                    })
+                })
+            }
+
+            const deleteTodo = (todo, listItemID, deleteID) => {
+                let deleteBtn = $(`#${deleteID}`);
+                deleteBtn.click(() => {
+                    fetch(`/${todo._id}`, {
+                        method: "delete"
+                    }).then((response) => {
+                        return response.json();
+                    }).then((data) => {
+                        if (data.ok == 1) {
+                            $(`#${listItemID}`).remove();
+                        }
+                    });
+                })
+            }
+
+            const buildIDs = (todo) => {
+                return {
+                    editID: "edit_" + todo._id,
+                    deleteID: "delete_" + todo._id,
+                    listItemID: "list_" + todo._id,
+                    todoID: "todo_" + todo._id
+                }
+            }
+
+            const buildTemplate = (todo, ids) => {
+                return ` <li class="list-group-item" id ${ids.listItemID}>
+                           <div class= "row">
+                              <div class="col-md-4" id="${ids.todoID}">${todo.todo}</div>
+                              <div class="col-md-4"></div>
+                              <div class="col-md-4" text-right>
+                                <button type="button" class="btn btn-secondary" id="${ids.editID}">Edit</button>
+                                <button type="button" class="btn btn-danger" id="${ids.deleteID}">Delete</button>
+                                </div>
+                           </div>
+                        </li>`;
+            }
+
+            const displayTodos = (data) => {
+                data.forEach((todo) => {
+                    let ids = buildIDs(todo);
+                    display.append(buildTemplate(todo, ids));
+                    editTodo(todo, ids.todoID, ids.editID);
+                    deleteTodo(todo, ids.listItemID, ids.deleteID);
+                });
+            }
+
+            form.submit((e) => {
+                e.preventDefault();
+                fetch('/', {
+                    method: 'post',
+                    headers: { "Content-Type": "application/json ; charset: utf-8" },
+                    body: JSON.stringify({ todo: todoUserInput.val() })
+                }).then((response) => {
+                    return response.json();
+                }).then((data) => {
+                    if (!data.error) {
+                        if (result.data.ok == 1 && result.data.n == 1) {
+                            let ids = buildIDs(data.document);
+                            display.append(buildTemplate(data.document, ids));
+                            editTodo(data.document, ids.todoID, ids.editID);
+                            deleteTodo(data.document, ids.listItemID, ids.deleteID);
+                            displayMessage(true, data.msg);
+                        }
+                    }
+                    else
+                        displayMessage(false, data.error.message);
+
+                    resetTodosInput();
+                    
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
